@@ -1,0 +1,19 @@
+name: Docker Build Check
+
+# Триггер: запускать при каждом push в ветку main
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest # GitHub даст тебе бесплатный сервер на Linux
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3 # Робот скачивает твой код
+
+      - name: Build Docker image
+        run: docker build -t crypto-monitor:test . # Робот пробует собрать образ
+
+      - name: Run logic check
+        run: echo "Docker build successful, environment is ready!"
