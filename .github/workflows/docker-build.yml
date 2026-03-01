@@ -1,19 +1,38 @@
-name: Docker Build Check
+name: Crypto Monitor CI/CD Test
 
-# Триггер: запускать при каждом push в ветку main
+# Запускаем робота каждый раз, когда ты делаешь git push в ветку main
 on:
   push:
     branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
-  build-test:
-    runs-on: ubuntu-latest # GitHub даст тебе бесплатный сервер на Linux
+  build-and-test:
+    runs-on: ubuntu-latest # Используем свежий Linux от GitHub
+
     steps:
+      # 1. Робот скачивает твой код из репозитория
       - name: Checkout code
-        uses: actions/checkout@v3 # Робот скачивает твой код
+        uses: actions/checkout@v3
 
+      # 2. Робот собирает Docker-образ по твоему Dockerfile
       - name: Build Docker image
-        run: docker build -t crypto-monitor:test . # Робот пробует собрать образ
+        run: docker build -t crypto-monitor:test .
 
-      - name: Run logic check
-        run: echo "Docker build successful, environment is ready!"
+      # 3. Робот запускает контейнер, ждет 15 секунд и показывает логи
+      - name: Run Monitor and Show Results
+        run: |
+          echo "Starting container in background..."
+          docker run -d --name monitor-run -e EXCHANGES="binance.com,google.com,okx.com" -e CHECK_INTERVAL=2 crypto-monitor:test
+          
+          echo "Waiting 15 seconds for logs to accumulate..."
+          sleep 15
+          
+          echo "--- LOGS FROM CONTAINER ---"
+          docker logs monitor-run
+          echo "--- END OF LOGS ---"
+
+      # 4. Очистка (хороший тон в DevOps)
+      - name: Cleanup
+        run: docker rm -f monitor-run
